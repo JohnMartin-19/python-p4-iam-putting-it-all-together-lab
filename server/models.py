@@ -8,19 +8,39 @@ class User(db.Model, SerializerMixin):
 
     serialize_rules = ("-recipes.user",'-_password_hash',)
 
-    id = db.Column(db.Integer(255),primary_key = True)
+    id = db.Column(db.Integer(),primary_key = True)
     username = db.Column(db.String(64), unique=True, nullable = False)
-    password = db.Column(db.LargeBinary())
+    _password_hash = db.Column(db.String())
     image_url = db.Column(db.String)
     bio = db.Column(db.String)
 
+    recipes = db.relationship('Recipe', backref='user')
+
+    @hybrid_property
+    def password_hash(self):
+        raise AttributeError('Passwords cannot be viewed.')
+    
+    @password_hash.setter
+    def password_hash(self, password):
+        return bcrypt.check_password_hash(
+            self._password_hash,password.encode('utf-8')
+        )
+    
+    def __repr__(self):
+        return f"User {self.username}"
+
 class Recipe(db.Model, SerializerMixin):
     __tablename__ = 'recipes'
-    id = db.Column(db.Integer)
+    __table_args__ = (
+        db.CheckConstraint('length(instructions) >= 50'),
+    )
+
+    id = db.Column(db.Integer(),primary_key = True)
     title = db.Column(db.String,nullable = False)
-    user_id = db.Column(db.Integer(64),foreign_key = True)
+    user_id = db.Column(db.Integer(),db.ForeignKey('users.id'))
     instructions = db.Column(db.String)
-    minutes_to_complete = db.Column(db.Integer >=(50))
+    minutes_to_complete = db.Column(db.Integer )
 
     
-    pass
+    def __repr__(self):
+     return f"Recipe {self.id}: {self.title}"
