@@ -7,8 +7,43 @@ from sqlalchemy.exc import IntegrityError
 from config import app, db, api
 from models import User, Recipe
 
+
+@app.before_request
+def check_if_logged_in():
+    open_access_list = [
+        'signup',
+        'signup',
+        'check_session'
+    ]
+
+    if (request.endpoint) not in open_access_list and (not session.get('user_id')):
+        return {'error': '401 Unauthorized'},401
 class Signup(Resource):
-    pass
+    def post(self):
+        data = request.json
+        # Check required fields
+        username= data.get('username')
+        password=data.get('password')
+        image_url = data.get('image_url')
+        bio = data.get('bio')
+
+        user = User(
+            username=username,
+            image_url = image_url,
+            bio = bio,
+        )
+
+        user.password_hash = password
+
+        try:
+            db.session.add(user)
+            db.session.commit()
+
+            session['user_id'] = user.id
+
+            return user.to_dict(),201
+        except IntegrityError:
+            return {'error': '422 Unprotected Entity'},422
 
 class CheckSession(Resource):
     pass
