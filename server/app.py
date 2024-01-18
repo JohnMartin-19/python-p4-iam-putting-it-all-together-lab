@@ -46,10 +46,17 @@ class Signup(Resource):
             return {'error': '422 Unprotected Entity'},422
 
 class CheckSession(Resource):
-    pass
+    def get(self):
+
+        user_id = session['user_id']
+        if user_id:
+            user = User.query.filter_by(id=user_id).first()
+            return user.to_dict(),200
+        
+        return {},401
 
 class Login(Resource):
-    pass
+    
 
 class Logout(Resource):
     pass
